@@ -88,5 +88,34 @@ def upload_result():
     return {"status":"success"}
 
 
+# GET USERS
+@app.route("/get_users")
+def get_users():
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+    SELECT email,password_hash,role,is_active
+    FROM users
+    """)
+
+    rows = c.fetchall()
+
+    users = []
+
+    for r in rows:
+        users.append({
+            "email": r[0],
+            "password_hash": r[1],
+            "role": r[2],
+            "is_active": r[3]
+        })
+
+    conn.close()
+
+    return jsonify(users)
+
+
 if __name__ == "__main__":
     app.run()
