@@ -8,7 +8,49 @@ DB = "server.db"
 
 
 def get_db():
-    return sqlite3.connect(DB)
+    conn = sqlite3.connect(DB)
+    return conn
+
+
+# CREATE DATABASE TABLES
+def init_db():
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT,
+        password_hash TEXT,
+        role TEXT,
+        is_active INTEGER
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS tests(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        test_name TEXT,
+        master_dictation TEXT,
+        duration_sec INTEGER
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS results(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        roll_no TEXT,
+        test_id INTEGER,
+        wpm INTEGER,
+        accuracy INTEGER,
+        errors INTEGER
+    )
+    """)
+
+    conn.commit()
+    conn.close()
 
 
 @app.route("/")
@@ -16,39 +58,14 @@ def home():
     return "Steno Sync Server Running"
 
 
-# GET USERS (basic info)
-@app.route("/users")
-def list_users():
-    conn = get_db()
-    c = conn.cursor()
-
-    c.execute("SELECT id,email,is_active,role FROM users")
-    rows = c.fetchall()
-
-    users = []
-    for r in rows:
-        users.append({
-            "id": r[0],
-            "email": r[1],
-            "active": r[2],
-            "role": r[3]
-        })
-
-    conn.close()
-    return jsonify(users)
-
-
-# GET USERS FOR SYNC
+# GET USERS
 @app.route("/get_users")
-def get_users_sync():
+def get_users():
 
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("""
-    SELECT email,password_hash,role,is_active
-    FROM users
-    """)
+    c.execute("SELECT email,password_hash,role,is_active FROM users")
 
     rows = c.fetchall()
 
@@ -91,7 +108,7 @@ def get_tests():
     return jsonify(tests)
 
 
-# UPLOAD RESULTS
+# UPLOAD RESULT
 @app.route("/upload_result", methods=["POST"])
 def upload_result():
 
@@ -104,7 +121,7 @@ def upload_result():
     INSERT INTO results
     (name,roll_no,test_id,wpm,accuracy,errors)
     VALUES (?,?,?,?,?,?)
-    """, (
+    """,(
         data["name"],
         data["roll_no"],
         data["test_id"],
@@ -119,7 +136,9 @@ def upload_result():
     return {"status": "success"}
 
 
-# START SERVER (Render compatible)
 if __name__ == "__main__":
+
+    init_db()
+
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
