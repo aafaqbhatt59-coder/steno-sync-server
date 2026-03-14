@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
 import sqlite3
+import os
 
 app = Flask(__name__)
 
 DB = "server.db"
+
 
 def get_db():
     return sqlite3.connect(DB)
@@ -14,9 +16,9 @@ def home():
     return "Steno Sync Server Running"
 
 
-# GET USERS
+# GET USERS (basic info)
 @app.route("/users")
-def get_users():
+def list_users():
     conn = get_db()
     c = conn.cursor()
 
@@ -33,6 +35,35 @@ def get_users():
         })
 
     conn.close()
+    return jsonify(users)
+
+
+# GET USERS FOR SYNC
+@app.route("/get_users")
+def get_users_sync():
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+    SELECT email,password_hash,role,is_active
+    FROM users
+    """)
+
+    rows = c.fetchall()
+
+    users = []
+
+    for r in rows:
+        users.append({
+            "email": r[0],
+            "password_hash": r[1],
+            "role": r[2],
+            "is_active": r[3]
+        })
+
+    conn.close()
+
     return jsonify(users)
 
 
@@ -73,7 +104,7 @@ def upload_result():
     INSERT INTO results
     (name,roll_no,test_id,wpm,accuracy,errors)
     VALUES (?,?,?,?,?,?)
-    """,(
+    """, (
         data["name"],
         data["roll_no"],
         data["test_id"],
@@ -85,40 +116,10 @@ def upload_result():
     conn.commit()
     conn.close()
 
-    return {"status":"success"}
+    return {"status": "success"}
 
 
-# GET USERS
-@app.route("/get_users")
-def get_users():
-
-    conn = get_db()
-    c = conn.cursor()
-
-    c.execute("""
-    SELECT email,password_hash,role,is_active
-    FROM users
-    """)
-
-    rows = c.fetchall()
-
-    users = []
-
-    for r in rows:
-        users.append({
-            "email": r[0],
-            "password_hash": r[1],
-            "role": r[2],
-            "is_active": r[3]
-        })
-
-    conn.close()
-
-    return jsonify(users)
-
-
-import os
-
+# START SERVER (Render compatible)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
