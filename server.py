@@ -162,6 +162,27 @@ def upload_result():
 
     return {"status": "success"}
 
+from werkzeug.security import generate_password_hash
+
+@app.route("/create_admin")
+def create_admin():
+
+    conn = get_db()
+    c = conn.cursor()
+
+    email = "admin@admin.com"
+    password = generate_password_hash("admin123")
+
+    c.execute("""
+    INSERT OR REPLACE INTO users (email,password_hash,role,is_active)
+    VALUES (?,?,?,1)
+    """,(email,password,"admin"))
+
+    conn.commit()
+    conn.close()
+
+    return "Admin created successfully"
+
 
 # ================= RUN =================
 
