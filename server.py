@@ -8,11 +8,10 @@ DB = "server.db"
 
 
 def get_db():
-    conn = sqlite3.connect(DB)
-    return conn
+    return sqlite3.connect(DB)
 
 
-# CREATE DATABASE TABLES
+# ================= DATABASE =================
 def init_db():
 
     conn = get_db()
@@ -21,7 +20,7 @@ def init_db():
     c.execute("""
     CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT,
+        email TEXT UNIQUE,
         password_hash TEXT,
         role TEXT,
         is_active INTEGER
@@ -58,6 +57,33 @@ def home():
     return "Steno Sync Server Running"
 
 
+# ================= USERS =================
+
+# 🔥 CREATE USER (MOST IMPORTANT)
+@app.route("/create_user", methods=["POST"])
+def create_user():
+
+    data = request.json
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+    INSERT OR REPLACE INTO users (email,password_hash,role,is_active)
+    VALUES (?,?,?,?)
+    """,(
+        data["email"],
+        data["password_hash"],
+        data["role"],
+        data["is_active"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {"status": "user created"}
+
+
 # GET USERS
 @app.route("/get_users")
 def get_users():
@@ -66,7 +92,6 @@ def get_users():
     c = conn.cursor()
 
     c.execute("SELECT email,password_hash,role,is_active FROM users")
-
     rows = c.fetchall()
 
     users = []
@@ -84,7 +109,8 @@ def get_users():
     return jsonify(users)
 
 
-# GET TESTS
+# ================= TESTS =================
+
 @app.route("/tests")
 def get_tests():
 
@@ -108,7 +134,8 @@ def get_tests():
     return jsonify(tests)
 
 
-# UPLOAD RESULT
+# ================= RESULTS =================
+
 @app.route("/upload_result", methods=["POST"])
 def upload_result():
 
@@ -135,6 +162,8 @@ def upload_result():
 
     return {"status": "success"}
 
+
+# ================= RUN =================
 
 if __name__ == "__main__":
 
