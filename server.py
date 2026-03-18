@@ -164,6 +164,28 @@ def upload_result():
 
 from werkzeug.security import generate_password_hash
 
+@app.route("/create_test", methods=["POST"])
+def create_test():
+
+    data = request.json
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+    INSERT INTO tests (test_name, master_dictation, duration_sec)
+    VALUES (?,?,?)
+    """,(
+        data["test_name"],
+        data["dictation"],
+        data["duration"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {"status":"test created"}
+
 @app.route("/create_admin")
 def create_admin():
 
