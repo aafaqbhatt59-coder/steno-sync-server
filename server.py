@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import sqlite3
 import os
+from werkzeug.security import generate_password_hash
 
 app = Flask(__name__)
 
@@ -59,7 +60,6 @@ def home():
 
 # ================= USERS =================
 
-# 🔥 CREATE USER (MOST IMPORTANT)
 @app.route("/create_user", methods=["POST"])
 def create_user():
 
@@ -84,7 +84,6 @@ def create_user():
     return {"status": "user created"}
 
 
-# GET USERS
 @app.route("/get_users")
 def get_users():
 
@@ -133,7 +132,8 @@ def get_tests():
     conn.close()
     return jsonify(tests)
 
-# CREATE TEST (NEW API)
+
+# ✅ ONLY ONE CREATE TEST (FIXED)
 @app.route("/create_test", methods=["POST"])
 def create_test():
 
@@ -145,7 +145,7 @@ def create_test():
     c.execute("""
     INSERT INTO tests (test_name, master_dictation, duration_sec)
     VALUES (?,?,?)
-    """, (
+    """,(
         data["test_name"],
         data["dictation"],
         data["duration"]
@@ -154,7 +154,7 @@ def create_test():
     conn.commit()
     conn.close()
 
-    return {"status": "test added"}
+    return {"status": "test created"}
 
 
 # ================= RESULTS =================
@@ -185,29 +185,8 @@ def upload_result():
 
     return {"status": "success"}
 
-from werkzeug.security import generate_password_hash
 
-@app.route("/create_test", methods=["POST"])
-def create_test():
-
-    data = request.json
-
-    conn = get_db()
-    c = conn.cursor()
-
-    c.execute("""
-    INSERT INTO tests (test_name, master_dictation, duration_sec)
-    VALUES (?,?,?)
-    """,(
-        data["test_name"],
-        data["dictation"],
-        data["duration"]
-    ))
-
-    conn.commit()
-    conn.close()
-
-    return {"status":"test created"}
+# ================= ADMIN CREATION =================
 
 @app.route("/create_admin")
 def create_admin():
