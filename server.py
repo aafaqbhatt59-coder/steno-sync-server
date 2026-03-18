@@ -133,6 +133,29 @@ def get_tests():
     conn.close()
     return jsonify(tests)
 
+# CREATE TEST (NEW API)
+@app.route("/create_test", methods=["POST"])
+def create_test():
+
+    data = request.json
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+    INSERT INTO tests (test_name, master_dictation, duration_sec)
+    VALUES (?,?,?)
+    """, (
+        data["test_name"],
+        data["dictation"],
+        data["duration"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {"status": "test added"}
+
 
 # ================= RESULTS =================
 
