@@ -228,6 +228,28 @@ def reset_admin():
 
     return "Admin reset successfully"
 
+@app.route("/reset_user_password", methods=["POST"])
+def reset_user_password():
+
+    data = request.json
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+    UPDATE users
+    SET password_hash=?
+    WHERE email=?
+    """,(
+        data["password_hash"],
+        data["email"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {"status": "password updated"}
+
 
 # ================= RUN =================
 
