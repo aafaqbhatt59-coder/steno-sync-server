@@ -207,6 +207,27 @@ def create_admin():
 
     return "Admin created successfully"
 
+from werkzeug.security import generate_password_hash
+
+@app.route("/reset_admin")
+def reset_admin():
+
+    conn = get_db()
+    c = conn.cursor()
+
+    email = "admin@admin.com"
+    new_password = generate_password_hash("admin123")
+
+    c.execute("""
+    INSERT OR REPLACE INTO users (email,password_hash,role,is_active)
+    VALUES (?,?,?,1)
+    """,(email,new_password,"admin"))
+
+    conn.commit()
+    conn.close()
+
+    return "Admin reset successfully"
+
 
 # ================= RUN =================
 
